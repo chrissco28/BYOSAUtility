@@ -41,17 +41,28 @@ namespace BYOSA_Utility
             this.label3 = new System.Windows.Forms.Label();
             this.btnValidate = new System.Windows.Forms.Button();
             this.txtResults = new System.Windows.Forms.TextBox();
-            this.lblResults = new System.Windows.Forms.Label();
+            this.lblStatus = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.txtContainer = new System.Windows.Forms.TextBox();
             this.lblContainer = new System.Windows.Forms.Label();
             this.txtManifestRoot = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.gridResults = new System.Windows.Forms.DataGridView();
+            this.Entity = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Regex = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.FileName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.lblResults = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            ((System.ComponentModel.ISupportInitialize)(this.gridResults)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnTest
             // 
-            this.btnTest.Location = new System.Drawing.Point(659, 78);
+            this.btnTest.Location = new System.Drawing.Point(859, 94);
             this.btnTest.Name = "btnTest";
             this.btnTest.Size = new System.Drawing.Size(112, 34);
             this.btnTest.TabIndex = 0;
@@ -62,7 +73,7 @@ namespace BYOSA_Utility
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(24, 41);
+            this.label1.Location = new System.Drawing.Point(15, 52);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(129, 25);
             this.label1.TabIndex = 1;
@@ -71,7 +82,7 @@ namespace BYOSA_Utility
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(24, 81);
+            this.label2.Location = new System.Drawing.Point(15, 96);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(110, 25);
             this.label2.TabIndex = 2;
@@ -79,21 +90,21 @@ namespace BYOSA_Utility
             // 
             // txtAccountName
             // 
-            this.txtAccountName.Location = new System.Drawing.Point(186, 40);
+            this.txtAccountName.Location = new System.Drawing.Point(152, 52);
             this.txtAccountName.Name = "txtAccountName";
             this.txtAccountName.Size = new System.Drawing.Size(150, 31);
             this.txtAccountName.TabIndex = 3;
             // 
             // txtAccountKey
             // 
-            this.txtAccountKey.Location = new System.Drawing.Point(186, 79);
+            this.txtAccountKey.Location = new System.Drawing.Point(152, 94);
             this.txtAccountKey.Name = "txtAccountKey";
-            this.txtAccountKey.Size = new System.Drawing.Size(457, 31);
+            this.txtAccountKey.Size = new System.Drawing.Size(686, 31);
             this.txtAccountKey.TabIndex = 4;
             // 
             // btnOpenManifest
             // 
-            this.btnOpenManifest.Location = new System.Drawing.Point(659, 118);
+            this.btnOpenManifest.Location = new System.Drawing.Point(859, 77);
             this.btnOpenManifest.Name = "btnOpenManifest";
             this.btnOpenManifest.Size = new System.Drawing.Size(112, 34);
             this.btnOpenManifest.TabIndex = 5;
@@ -104,32 +115,32 @@ namespace BYOSA_Utility
             // lblManifestFile
             // 
             this.lblManifestFile.AutoSize = true;
-            this.lblManifestFile.Location = new System.Drawing.Point(24, 121);
+            this.lblManifestFile.Location = new System.Drawing.Point(2, 82);
             this.lblManifestFile.Name = "lblManifestFile";
-            this.lblManifestFile.Size = new System.Drawing.Size(111, 25);
+            this.lblManifestFile.Size = new System.Drawing.Size(38, 25);
             this.lblManifestFile.TabIndex = 6;
-            this.lblManifestFile.Text = "Manifest File";
+            this.lblManifestFile.Text = "File";
             // 
             // txtManifestPath
             // 
-            this.txtManifestPath.Location = new System.Drawing.Point(186, 118);
+            this.txtManifestPath.Location = new System.Drawing.Point(159, 80);
             this.txtManifestPath.Name = "txtManifestPath";
-            this.txtManifestPath.Size = new System.Drawing.Size(457, 31);
+            this.txtManifestPath.Size = new System.Drawing.Size(679, 31);
             this.txtManifestPath.TabIndex = 7;
             // 
             // txtManifestContent
             // 
-            this.txtManifestContent.Location = new System.Drawing.Point(186, 207);
+            this.txtManifestContent.Location = new System.Drawing.Point(159, 121);
             this.txtManifestContent.Multiline = true;
             this.txtManifestContent.Name = "txtManifestContent";
             this.txtManifestContent.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtManifestContent.Size = new System.Drawing.Size(585, 279);
+            this.txtManifestContent.Size = new System.Drawing.Size(812, 279);
             this.txtManifestContent.TabIndex = 8;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(24, 210);
+            this.label3.Location = new System.Drawing.Point(2, 119);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(148, 25);
             this.label3.TabIndex = 9;
@@ -137,7 +148,7 @@ namespace BYOSA_Utility
             // 
             // btnValidate
             // 
-            this.btnValidate.Location = new System.Drawing.Point(659, 492);
+            this.btnValidate.Location = new System.Drawing.Point(765, 1136);
             this.btnValidate.Name = "btnValidate";
             this.btnValidate.Size = new System.Drawing.Size(112, 34);
             this.btnValidate.TabIndex = 10;
@@ -147,34 +158,35 @@ namespace BYOSA_Utility
             // 
             // txtResults
             // 
-            this.txtResults.Location = new System.Drawing.Point(186, 541);
+            this.txtResults.Location = new System.Drawing.Point(183, 619);
             this.txtResults.Multiline = true;
             this.txtResults.Name = "txtResults";
             this.txtResults.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtResults.Size = new System.Drawing.Size(585, 362);
+            this.txtResults.Size = new System.Drawing.Size(812, 161);
             this.txtResults.TabIndex = 11;
             // 
-            // lblResults
+            // lblStatus
             // 
-            this.lblResults.AutoSize = true;
-            this.lblResults.Location = new System.Drawing.Point(24, 541);
-            this.lblResults.Name = "lblResults";
-            this.lblResults.Size = new System.Drawing.Size(150, 25);
-            this.lblResults.TabIndex = 12;
-            this.lblResults.Text = "Validation Results";
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Location = new System.Drawing.Point(35, 622);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(60, 25);
+            this.lblStatus.TabIndex = 12;
+            this.lblStatus.Text = "Status";
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(659, 909);
+            this.btnSave.Location = new System.Drawing.Point(883, 1136);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(112, 34);
             this.btnSave.TabIndex = 13;
             this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // txtContainer
             // 
-            this.txtContainer.Location = new System.Drawing.Point(493, 40);
+            this.txtContainer.Location = new System.Drawing.Point(418, 49);
             this.txtContainer.Name = "txtContainer";
             this.txtContainer.Size = new System.Drawing.Size(150, 31);
             this.txtContainer.TabIndex = 15;
@@ -182,7 +194,7 @@ namespace BYOSA_Utility
             // lblContainer
             // 
             this.lblContainer.AutoSize = true;
-            this.lblContainer.Location = new System.Drawing.Point(399, 41);
+            this.lblContainer.Location = new System.Drawing.Point(324, 50);
             this.lblContainer.Name = "lblContainer";
             this.lblContainer.Size = new System.Drawing.Size(88, 25);
             this.lblContainer.TabIndex = 14;
@@ -190,48 +202,126 @@ namespace BYOSA_Utility
             // 
             // txtManifestRoot
             // 
-            this.txtManifestRoot.Location = new System.Drawing.Point(225, 165);
+            this.txtManifestRoot.Location = new System.Drawing.Point(159, 41);
             this.txtManifestRoot.Name = "txtManifestRoot";
-            this.txtManifestRoot.Size = new System.Drawing.Size(418, 31);
+            this.txtManifestRoot.Size = new System.Drawing.Size(409, 31);
             this.txtManifestRoot.TabIndex = 17;
-            this.txtManifestRoot.Text = "/AccountDetails/";
+            this.txtManifestRoot.Text = "/ManifestRootLocation/";
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(24, 165);
+            this.label4.Location = new System.Drawing.Point(2, 41);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(195, 25);
+            this.label4.Size = new System.Drawing.Size(122, 25);
             this.label4.TabIndex = 16;
-            this.label4.Text = "Manifest Root Location";
+            this.label4.Text = "Root Location";
+            // 
+            // gridResults
+            // 
+            this.gridResults.AllowUserToAddRows = false;
+            this.gridResults.AllowUserToDeleteRows = false;
+            this.gridResults.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.gridResults.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridResults.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Entity,
+            this.Regex,
+            this.FileName});
+            this.gridResults.Location = new System.Drawing.Point(183, 804);
+            this.gridResults.Name = "gridResults";
+            this.gridResults.ReadOnly = true;
+            this.gridResults.RowHeadersWidth = 62;
+            this.gridResults.RowTemplate.Height = 33;
+            this.gridResults.Size = new System.Drawing.Size(812, 326);
+            this.gridResults.TabIndex = 18;
+            // 
+            // Entity
+            // 
+            this.Entity.FillWeight = 85.22729F;
+            this.Entity.HeaderText = "Entity";
+            this.Entity.MinimumWidth = 8;
+            this.Entity.Name = "Entity";
+            this.Entity.ReadOnly = true;
+            // 
+            // Regex
+            // 
+            this.Regex.FillWeight = 48.81197F;
+            this.Regex.HeaderText = "Validate Regex";
+            this.Regex.MinimumWidth = 8;
+            this.Regex.Name = "Regex";
+            this.Regex.ReadOnly = true;
+            // 
+            // FileName
+            // 
+            this.FileName.FillWeight = 165.9608F;
+            this.FileName.HeaderText = "File Path";
+            this.FileName.MinimumWidth = 8;
+            this.FileName.Name = "FileName";
+            this.FileName.ReadOnly = true;
+            // 
+            // lblResults
+            // 
+            this.lblResults.AutoSize = true;
+            this.lblResults.Location = new System.Drawing.Point(35, 804);
+            this.lblResults.Name = "lblResults";
+            this.lblResults.Size = new System.Drawing.Size(67, 25);
+            this.lblResults.TabIndex = 19;
+            this.lblResults.Text = "Results";
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.txtContainer);
+            this.groupBox1.Controls.Add(this.label1);
+            this.groupBox1.Controls.Add(this.label2);
+            this.groupBox1.Controls.Add(this.txtAccountName);
+            this.groupBox1.Controls.Add(this.txtAccountKey);
+            this.groupBox1.Controls.Add(this.lblContainer);
+            this.groupBox1.Controls.Add(this.btnTest);
+            this.groupBox1.Location = new System.Drawing.Point(24, 33);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(996, 142);
+            this.groupBox1.TabIndex = 20;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Data Lake Details";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.btnOpenManifest);
+            this.groupBox2.Controls.Add(this.lblManifestFile);
+            this.groupBox2.Controls.Add(this.txtManifestPath);
+            this.groupBox2.Controls.Add(this.txtManifestRoot);
+            this.groupBox2.Controls.Add(this.label4);
+            this.groupBox2.Controls.Add(this.txtManifestContent);
+            this.groupBox2.Controls.Add(this.label3);
+            this.groupBox2.Location = new System.Drawing.Point(24, 191);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(996, 422);
+            this.groupBox2.TabIndex = 21;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Default Manifest ";
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(795, 953);
-            this.Controls.Add(this.txtManifestRoot);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.txtContainer);
-            this.Controls.Add(this.lblContainer);
-            this.Controls.Add(this.btnSave);
+            this.ClientSize = new System.Drawing.Size(1044, 1184);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.lblResults);
+            this.Controls.Add(this.gridResults);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.txtResults);
             this.Controls.Add(this.btnValidate);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.txtManifestContent);
-            this.Controls.Add(this.txtManifestPath);
-            this.Controls.Add(this.lblManifestFile);
-            this.Controls.Add(this.btnOpenManifest);
-            this.Controls.Add(this.txtAccountKey);
-            this.Controls.Add(this.txtAccountName);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.btnTest);
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "BYOSA Utility";
+            this.Text = "CDM Manifest Utility";
             this.Load += new System.EventHandler(this.Main_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.gridResults)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -251,12 +341,20 @@ namespace BYOSA_Utility
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnValidate;
         private System.Windows.Forms.TextBox txtResults;
-        private System.Windows.Forms.Label lblResults;
+        private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.TextBox txtContainer;
         private System.Windows.Forms.Label lblContainer;
         private System.Windows.Forms.TextBox txtManifestRoot;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.DataGridView gridResults;
+        private System.Windows.Forms.Label lblResults;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Entity;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Regex;
+        private System.Windows.Forms.DataGridViewTextBoxColumn FileName;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
     }
 }
 
