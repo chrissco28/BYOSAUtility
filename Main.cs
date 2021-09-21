@@ -344,7 +344,11 @@ namespace BYOSA_Utility
             string entityPath = string.Empty;
             string entity = string.Empty;
             string regEx = string.Empty;
+            string root = string.Empty;
 
+            //remove the path if there is one
+            root = txtManifestRoot.Text.Replace("/","");
+           
             //clear status and results grid
             txtResults.Text = "";
             gridResults.Rows.Clear();
@@ -360,7 +364,7 @@ namespace BYOSA_Utility
                     if (manifest.Rows[i][2].ToString().Length > 0)
                     {
                         entity = manifest.Rows[i][0].ToString();
-                        entityPath = txtManifestRoot.Text + manifest.Rows[i][2].ToString();
+                        entityPath = "/" + root + "/" + manifest.Rows[i][2].ToString();
                         regEx = manifest.Rows[i][3].ToString();
 
                         UpdateStatus("Validating " + entity);

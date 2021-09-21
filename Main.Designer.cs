@@ -65,7 +65,7 @@ namespace BYOSA_Utility
             this.btnTest.Location = new System.Drawing.Point(859, 94);
             this.btnTest.Name = "btnTest";
             this.btnTest.Size = new System.Drawing.Size(112, 34);
-            this.btnTest.TabIndex = 0;
+            this.btnTest.TabIndex = 4;
             this.btnTest.Text = "Test";
             this.btnTest.UseVisualStyleBackColor = true;
             this.btnTest.Click += new System.EventHandler(this.btnConnect_Click);
@@ -93,21 +93,21 @@ namespace BYOSA_Utility
             this.txtAccountName.Location = new System.Drawing.Point(152, 52);
             this.txtAccountName.Name = "txtAccountName";
             this.txtAccountName.Size = new System.Drawing.Size(150, 31);
-            this.txtAccountName.TabIndex = 3;
+            this.txtAccountName.TabIndex = 1;
             // 
             // txtAccountKey
             // 
             this.txtAccountKey.Location = new System.Drawing.Point(152, 94);
             this.txtAccountKey.Name = "txtAccountKey";
             this.txtAccountKey.Size = new System.Drawing.Size(686, 31);
-            this.txtAccountKey.TabIndex = 4;
+            this.txtAccountKey.TabIndex = 3;
             // 
             // btnOpenManifest
             // 
             this.btnOpenManifest.Location = new System.Drawing.Point(859, 77);
             this.btnOpenManifest.Name = "btnOpenManifest";
             this.btnOpenManifest.Size = new System.Drawing.Size(112, 34);
-            this.btnOpenManifest.TabIndex = 5;
+            this.btnOpenManifest.TabIndex = 6;
             this.btnOpenManifest.Text = "Open";
             this.btnOpenManifest.UseVisualStyleBackColor = true;
             this.btnOpenManifest.Click += new System.EventHandler(this.btnOpenManifest_Click);
@@ -127,6 +127,7 @@ namespace BYOSA_Utility
             this.txtManifestPath.Name = "txtManifestPath";
             this.txtManifestPath.Size = new System.Drawing.Size(679, 31);
             this.txtManifestPath.TabIndex = 7;
+            this.txtManifestPath.TabStop = false;
             // 
             // txtManifestContent
             // 
@@ -136,6 +137,7 @@ namespace BYOSA_Utility
             this.txtManifestContent.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtManifestContent.Size = new System.Drawing.Size(812, 279);
             this.txtManifestContent.TabIndex = 8;
+            this.txtManifestContent.TabStop = false;
             // 
             // label3
             // 
@@ -151,7 +153,7 @@ namespace BYOSA_Utility
             this.btnValidate.Location = new System.Drawing.Point(765, 1136);
             this.btnValidate.Name = "btnValidate";
             this.btnValidate.Size = new System.Drawing.Size(112, 34);
-            this.btnValidate.TabIndex = 10;
+            this.btnValidate.TabIndex = 7;
             this.btnValidate.Text = "Validate";
             this.btnValidate.UseVisualStyleBackColor = true;
             this.btnValidate.Click += new System.EventHandler(this.btnValidate_Click);
@@ -164,6 +166,7 @@ namespace BYOSA_Utility
             this.txtResults.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtResults.Size = new System.Drawing.Size(812, 161);
             this.txtResults.TabIndex = 11;
+            this.txtResults.TabStop = false;
             // 
             // lblStatus
             // 
@@ -179,7 +182,7 @@ namespace BYOSA_Utility
             this.btnSave.Location = new System.Drawing.Point(883, 1136);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(112, 34);
-            this.btnSave.TabIndex = 13;
+            this.btnSave.TabIndex = 8;
             this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
@@ -189,7 +192,7 @@ namespace BYOSA_Utility
             this.txtContainer.Location = new System.Drawing.Point(418, 49);
             this.txtContainer.Name = "txtContainer";
             this.txtContainer.Size = new System.Drawing.Size(150, 31);
-            this.txtContainer.TabIndex = 15;
+            this.txtContainer.TabIndex = 2;
             // 
             // lblContainer
             // 
@@ -205,17 +208,16 @@ namespace BYOSA_Utility
             this.txtManifestRoot.Location = new System.Drawing.Point(159, 41);
             this.txtManifestRoot.Name = "txtManifestRoot";
             this.txtManifestRoot.Size = new System.Drawing.Size(409, 31);
-            this.txtManifestRoot.TabIndex = 17;
-            this.txtManifestRoot.Text = "/ManifestRootLocation/";
+            this.txtManifestRoot.TabIndex = 5;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(2, 41);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(122, 25);
+            this.label4.Size = new System.Drawing.Size(105, 25);
             this.label4.TabIndex = 16;
-            this.label4.Text = "Root Location";
+            this.label4.Text = "Root Folder";
             // 
             // gridResults
             // 
@@ -234,6 +236,7 @@ namespace BYOSA_Utility
             this.gridResults.RowTemplate.Height = 33;
             this.gridResults.Size = new System.Drawing.Size(812, 326);
             this.gridResults.TabIndex = 18;
+            this.gridResults.TabStop = false;
             // 
             // Entity
             // 
