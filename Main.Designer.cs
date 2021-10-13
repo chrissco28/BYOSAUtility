@@ -93,7 +93,7 @@ namespace BYOSA_Utility
             this.txtAccountName.Location = new System.Drawing.Point(152, 52);
             this.txtAccountName.Name = "txtAccountName";
             this.txtAccountName.Size = new System.Drawing.Size(150, 31);
-            this.txtAccountName.TabIndex = 1;
+            this.txtAccountName.TabIndex = 0;
             // 
             // txtAccountKey
             // 
@@ -192,7 +192,7 @@ namespace BYOSA_Utility
             this.txtContainer.Location = new System.Drawing.Point(418, 49);
             this.txtContainer.Name = "txtContainer";
             this.txtContainer.Size = new System.Drawing.Size(150, 31);
-            this.txtContainer.TabIndex = 2;
+            this.txtContainer.TabIndex = 1;
             // 
             // lblContainer
             // 
