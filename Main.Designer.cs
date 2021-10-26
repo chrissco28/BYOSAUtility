@@ -209,6 +209,8 @@ namespace BYOSA_Utility
             this.txtManifestRoot.Name = "txtManifestRoot";
             this.txtManifestRoot.Size = new System.Drawing.Size(409, 31);
             this.txtManifestRoot.TabIndex = 5;
+            this.txtManifestRoot.Text = "/sampleRootFolder/sampleChildFolder/";
+            this.txtManifestRoot.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtManifestRoot_KeyDown);
             // 
             // label4
             // 

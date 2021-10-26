@@ -126,6 +126,14 @@ namespace BYOSA_Utility
                         else
                             regEx = new Regex(regExPattern);
 
+
+                        //only test the first file for performance considerations
+                        if (counter == 0)
+                        {
+                            ValidateEntityManifest(pathItem, entityName, client);
+                        }
+
+
                         UpdateResults(directoryName, pathItem.Name.Replace(path, ""), path, regEx.Match(pathItem.Name.Replace(path, "")).Success.ToString(), entityName);
                         counter++;
                     }
@@ -232,6 +240,9 @@ namespace BYOSA_Utility
         private bool ValidateManifest()
         {
             bool valid = false;
+            string[] entityManifestPaths;
+            string entityManifestPath = string.Empty;
+
             //read in the JSON from the text box
             try
             {
@@ -249,6 +260,7 @@ namespace BYOSA_Utility
                 manifest.Columns.Add("EntityPath");
                 manifest.Columns.Add("RootLocation");
                 manifest.Columns.Add("Regex");
+                manifest.Columns.Add("EntityManifestPath");
 
 
                 string json = txtManifestContent.Text.ToString();
@@ -309,7 +321,19 @@ namespace BYOSA_Utility
                             throw new Exception("The regular expression value cannot be found");
                         }
 
-                        manifest.Rows.Add(entityName.ToString(), entityPath.ToString(), rootLocation.ToString(), regEx.ToString());
+                        //parse the entity path to get the entity manifest location. the last path is the entity name so get everything before that
+                        entityManifestPaths = entityPath.ToString().Split("/");
+
+                        for (int i = 0; i < entityManifestPaths.Length; i++)
+                        {
+                            if (i == 0)
+                                entityManifestPath = txtManifestRoot.Text.ToString();
+
+                            if (i + 1 != entityManifestPaths.Length)
+                                entityManifestPath = entityManifestPath + "/" + entityManifestPaths[i].ToString();
+                        }
+
+                        manifest.Rows.Add(entityName.ToString(), entityPath.ToString(), rootLocation.ToString(), regEx.ToString(), entityManifestPath.ToString());
                     }
 
                 }
@@ -347,8 +371,15 @@ namespace BYOSA_Utility
             string root = string.Empty;
 
             //remove the path if there is one
-            root = txtManifestRoot.Text.Replace("/","");
-           
+            if (txtManifestRoot.Text.StartsWith("/"))
+            { 
+                root = txtManifestRoot.Text.Replace("/","");
+            }
+            else
+            {
+                root = txtManifestRoot.Text;
+            }
+
             //clear status and results grid
             txtResults.Text = "";
             gridResults.Rows.Clear();
@@ -511,6 +542,180 @@ namespace BYOSA_Utility
             catch(Exception ex)
             {
                 MessageBox.Show("There was an exception saving the file: " + ex.Message);
+            }
+        }
+
+
+        private void txtManifestRoot_KeyDown(object sender, KeyEventArgs e)
+        {
+            ClearManifestSample();
+        }
+
+
+        private void ClearManifestSample()
+        {
+            if (txtManifestRoot.Text == @"/sampleRootFolder/sampleChildFolder/")
+            {
+                txtManifestRoot.Clear();
+            }
+        }
+
+        private void ValidateEntityManifest(PathItem filePath, string entityName, DataLakeFileSystemClient client)
+        {
+            string line = string.Empty;
+            int fileColumnCount = 1;
+            int manifestColumnCount = 1;
+            string manifestContent = string.Empty;
+            string[] columnNames;
+            bool attributeNameMatch = true;
+            bool attributeDataTypeMatch = true;
+
+            JsonElement root;
+            JsonElement attributeName;
+            JsonElement dataType;
+
+            DataRow[] dataRow;
+            #region tabledeclartion 
+            DataTable entityStructure = new DataTable();
+            entityStructure.Rows.Clear();
+            entityStructure.Columns.Clear();
+            entityStructure.Columns.Add("AttributeName");
+            entityStructure.Columns.Add("AttributeOrder");
+            entityStructure.Columns.Add("DataType");
+
+
+            DataTable manifestStructure = new DataTable();
+            manifestStructure.Rows.Clear();
+            manifestStructure.Columns.Clear();
+            manifestStructure.Columns.Add("AttributeName");
+            manifestStructure.Columns.Add("AttributeOrder");
+            manifestStructure.Columns.Add("DataType");
+
+            #endregion
+            string filterExpression = "EntityName = '" + entityName + "'";
+            dataRow = manifest.Select(filterExpression);
+
+            //assume 1 row return for the entity for the time being; update to handle different logic in the future
+            DataLakeFileClient entityManifest = client.GetFileClient(dataRow[0]["EntityManifestPath"].ToString());
+            DataLakeFileClient fileClient = client.GetFileClient(filePath.Name);
+            Response<FileDownloadInfo> downloadResponseFile = fileClient.Read();
+            Response<FileDownloadInfo> downloadResponseEntity = entityManifest.Read();
+
+            //download the csv file
+            using (StreamReader streamReaderFile = new StreamReader(downloadResponseFile.Value.Content))
+            {
+                if (filePath.Name.EndsWith("csv"))
+                {
+                    line = streamReaderFile.ReadLine();
+                    fileColumnCount = line.Split(",").Length;
+                    columnNames = line.Split(",");
+                    for(int k=0; k< columnNames.Length; k++)
+                    {
+                        entityStructure.Rows.Add(columnNames[k].ToString(), k + 1, "string");
+                    }
+                }
+            }
+
+            //download the manifest file
+            using (StreamReader streamReaderManifest = new StreamReader(downloadResponseEntity.Value.Content))
+            {
+
+                //format the JSON
+                try
+                {
+                    var options = new JsonSerializerOptions()
+                    {
+                        WriteIndented = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    };
+
+                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(streamReaderManifest.ReadToEnd().ToString());
+
+                    manifestContent = JsonSerializer.Serialize(jsonElement, options);
+
+                }
+                catch (JsonException jx)
+                {
+                    MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, "CDM Manifest Utility");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("An error has occurred: " + ex.Message, "CDM Manifest Utility");
+                }
+                finally
+                {
+                    Cursor.Current = Cursors.Default;
+                }
+            }
+
+            var JSONoptions = new JsonDocumentOptions()
+            {
+            };
+
+            JsonDocument document = JsonDocument.Parse(manifestContent, JSONoptions);
+
+            if (document.RootElement.TryGetProperty("definitions", out root) == false)
+            {
+                throw new Exception("The entitiies node cannot be found");
+            }
+
+            var definition = root.EnumerateArray();
+
+            while (definition.MoveNext())
+            {
+                var hasAttributes = definition.Current.GetProperty("hasAttributes");
+                var attributes = hasAttributes.EnumerateArray();
+
+                while (attributes.MoveNext())
+                {
+                    if (attributes.Current.TryGetProperty("name", out attributeName) == false)
+                    {
+                        throw new Exception("The attribute name cannot be found");
+                    }
+
+                    if (attributes.Current.TryGetProperty("dataFormat", out dataType) == false)
+                    {
+                        throw new Exception("The data format cannot be found");
+                    }
+
+                    manifestStructure.Rows.Add(attributeName.ToString(), manifestColumnCount.ToString(), dataType.ToString());
+                    //increment the counter
+                    manifestColumnCount++;
+                }
+            }
+
+
+            //compare the two tables now
+            //look for the number of rows
+            if (manifestStructure.Rows.Count == entityStructure.Rows.Count)
+            {
+                UpdateStatus("Entity manifest and file has matching attribute count");
+
+                //compare colum names, data types
+                for (int x = 0; x < manifestStructure.Rows.Count; x++)
+                {
+                    if(manifestStructure.Rows[x]["AttributeName"].ToString().ToLower() != entityStructure.Rows[x]["AttributeName"].ToString().ToLower())
+                    {
+                        UpdateStatus("Warning: There is a mismatch in attribute name in position " + x.ToString());
+                        attributeNameMatch = false;
+                    }
+
+                    if (manifestStructure.Rows[x]["DataType"].ToString().ToLower() != entityStructure.Rows[x]["DataType"].ToString().ToLower())
+                    {
+                        UpdateStatus("Warning: There is a mismatch in attribute data types in position " + x.ToString());
+                        attributeDataTypeMatch = false;
+                    }
+                }
+
+                if (attributeNameMatch)
+                    UpdateStatus("Attribute names matched");
+
+                if (attributeDataTypeMatch)
+                    UpdateStatus("Attribute date types matched");
+            }
+            else
+            {
+                UpdateStatus("Warning: Entity manifest and file does not matching attribute count");
             }
         }
     }
