@@ -25,6 +25,8 @@ namespace BYOSA_Utility
             InitializeComponent();
         }
         DataTable manifest = new DataTable();
+        StringBuilder log = new StringBuilder();
+        DataTable resultsDetails = new DataTable();
 
         private void btnConnect_Click(object sender, EventArgs e)
         {
@@ -79,13 +81,23 @@ namespace BYOSA_Utility
             return dataLakeServiceClient;
         }
 
+        /// <summary>
+        /// Get all the items within the specified container
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="sharedKeyCredential"></param>
+        /// <param name="path"></param>
+        /// <param name="regExPattern"></param>
+        /// <param name="entityName"></param>
+        /// <returns></returns>
         private async Task ListContainersInDirectoryAsync(DataLakeFileSystemClient client, StorageSharedKeyCredential sharedKeyCredential, string path, string regExPattern, string entityName)
         {
             string directoryName = string.Empty;
             string fileName = string.Empty;
             string[] fileNames = new string[0];
             string[] directories = new string[0];
-            int counter = 0;
+           
+            int counter = 1;
             Regex regEx;
 
             try
@@ -126,20 +138,21 @@ namespace BYOSA_Utility
                         else
                             regEx = new Regex(regExPattern);
 
+                        int rowId = gridResults.Rows.Add();
 
-                        //only test the first file for performance considerations
-                        if (counter == 0)
-                        {
-                            ValidateEntityManifest(pathItem, entityName, client);
-                        }
+                        //add the results to a results grid shown to the user
+                        DataGridViewRow row = gridResults.Rows[rowId];
+                        row.Cells["FileName"].Value = pathItem.Name.Replace(path, "");
+                        row.Cells["Regex"].Value = regEx.Match(pathItem.Name.Replace(path, "")).Success.ToString();
+                        row.Cells["Entity"].Value = entityName;
+                        
+                        //column is not visible to the user
+                        //use this column for file/manifest validation and only select one file for performance
+                        row.Cells["FileCount"].Value = counter.ToString();
 
-
-                        UpdateResults(directoryName, pathItem.Name.Replace(path, ""), path, regEx.Match(pathItem.Name.Replace(path, "")).Success.ToString(), entityName);
-                        counter++;
                     }
+                    counter++;
                 }
-
-                UpdateStatus(entityName + " validation complete - " + counter.ToString() + " file(s) found");
             }
             catch (RequestFailedException rfex)
             {
@@ -173,6 +186,12 @@ namespace BYOSA_Utility
             tip.SetToolTip(txtManifestRoot, "The root location where the default manifest file is stored in the data lake");
 
             this.Text = "CDM Manifest Utility (" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
+
+            resultsDetails.Columns.Add("Source");
+            resultsDetails.Columns.Add("EntityName");
+            resultsDetails.Columns.Add("AttributeOrder");
+            resultsDetails.Columns.Add("AttributeName");
+            resultsDetails.Columns.Add("DataType");
         }
 
         private void btnOpenManifest_Click(object sender, EventArgs e)
@@ -242,6 +261,7 @@ namespace BYOSA_Utility
             bool valid = false;
             string[] entityManifestPaths;
             string entityManifestPath = string.Empty;
+            
 
             //read in the JSON from the text box
             try
@@ -262,6 +282,8 @@ namespace BYOSA_Utility
                 manifest.Columns.Add("Regex");
                 manifest.Columns.Add("EntityManifestPath");
 
+                //clear the results table if there are records; this handles a user clicking on validate multiple times
+                resultsDetails.Rows.Clear();
 
                 string json = txtManifestContent.Text.ToString();
                 Cursor.Current = Cursors.WaitCursor;
@@ -369,6 +391,8 @@ namespace BYOSA_Utility
             string entity = string.Empty;
             string regEx = string.Empty;
             string root = string.Empty;
+            bool entityChecked = false;
+            string entityManifestPath = string.Empty;
 
             //remove the path if there is one
             if (txtManifestRoot.Text.StartsWith("/"))
@@ -384,25 +408,68 @@ namespace BYOSA_Utility
             txtResults.Text = "";
             gridResults.Rows.Clear();
 
+            UpdateStatus("Starting Regex Validation");
+            UpdateStatus("--------------------");
+
             if (ValidateManifest())
             {
-                DataLakeServiceClient client = GetConnection();
-                DataLakeFileSystemClient fileClient = client.GetFileSystemClient(txtContainer.Text);
-                StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(txtAccountName.Text, txtAccountKey.Text);
-               
-                for (int i = 0; i < manifest.Rows.Count; i++)
+                try
                 {
-                    if (manifest.Rows[i][2].ToString().Length > 0)
-                    {
-                        entity = manifest.Rows[i][0].ToString();
-                        entityPath = "/" + root + "/" + manifest.Rows[i][2].ToString();
-                        regEx = manifest.Rows[i][3].ToString();
+                    DataLakeServiceClient client = GetConnection();
+                    DataLakeFileSystemClient fileClient = client.GetFileSystemClient(txtContainer.Text);
+                    StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(txtAccountName.Text, txtAccountKey.Text);
 
-                        UpdateStatus("Validating " + entity);
-                        await ListContainersInDirectoryAsync(fileClient, sharedKeyCredential, entityPath, regEx, entity);
+                    for (int i = 0; i < manifest.Rows.Count; i++)
+                    {
+                        if (manifest.Rows[i][2].ToString().Length > 0)
+                        {
+                            entity = manifest.Rows[i][0].ToString();
+                            entityPath = "/" + root + "/" + manifest.Rows[i][2].ToString();
+                            regEx = manifest.Rows[i][3].ToString();
+
+                            UpdateStatus("Validating Regex Patterns For " + entity);
+
+                            //get all the items within the container; results are stored in data table
+                            await ListContainersInDirectoryAsync(fileClient, sharedKeyCredential, entityPath, regEx, entity);
+                        }
                     }
+                    UpdateStatus("Completed Regex Validation");
+                    UpdateStatus("--------------------");
+                    UpdateStatus("Starting Entity Manifest Validation");
+                    //go through each entity in the manifest table
+                    foreach (DataRow entityRow in manifest.Rows)
+                    {
+                        entity = entityRow["EntityName"].ToString();
+                        entityManifestPath = entityRow["EntityManifestPath"].ToString();
+                        entityChecked = false;
+                        //validate the entity and manifest files
+                        foreach (DataGridViewRow row in gridResults.Rows)
+                        {
+                            if ((row.Cells["Regex"].Value.ToString() == "True") && (row.Cells["Entity"].Value.ToString() == entity) && (entityChecked == false))
+                            {
+                                UpdateStatus("--------------------");
+                                UpdateStatus("Starting " + entity + " Manifest Validation");
+                                bool hasErrors = ValidateEntityManifest(row.Cells["FileName"].Value.ToString(), entity, fileClient, entityManifestPath);
+
+                                if (hasErrors)
+                                    UpdateStatus("Completed " + entity + " Manifest Validation With Errors");
+                                else
+                                    UpdateStatus("Completed " + entity + " Manifest Validation Without Errors");
+
+                                entityChecked = true;
+                            }
+                        }
+                    }
+                    UpdateStatus("--------------------");
+                    UpdateStatus("Completed Entity Manifest Validation");
+                    UpdateStatus("--------------------");
+                    SaveLogFiles();
+                    UpdateStatus("Validation Complete. Log Files Generated");
                 }
-                UpdateStatus("Validation complete");
+                catch (Exception ex)
+                {
+                    UpdateStatus("There was an exception generated:" + ex.Message);
+                }
             }
         }
 
@@ -450,17 +517,9 @@ namespace BYOSA_Utility
                 txtResults.AppendText(Environment.NewLine);
 
             txtResults.AppendText(message);
+            Log(message);
         }
 
-        private void UpdateResults(string directory, string fileName, string path, string passedRegex, string entity)
-        {
-            int rowId = gridResults.Rows.Add();
-
-            DataGridViewRow row = gridResults.Rows[rowId];
-            row.Cells["FileName"].Value = fileName;
-            row.Cells["Regex"].Value = passedRegex;
-            row.Cells["Entity"].Value = entity;
-        }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
@@ -493,11 +552,11 @@ namespace BYOSA_Utility
                     }
                 }
 
-                saveFile(dt, filePath);
+                SaveCSVFile(dt, filePath, true);
             }
         }
 
-        private void saveFile(DataTable dtDataTable, string strFilePath)
+        private void SaveCSVFile(DataTable dtDataTable, string strFilePath, bool showMessage)
         {
             try
             { 
@@ -537,11 +596,14 @@ namespace BYOSA_Utility
                     sw.Write(sw.NewLine);
                 }
                 sw.Close();
-                MessageBox.Show("The file was successfully saved");
+                
+                if(showMessage)
+                    MessageBox.Show("The file was successfully saved");
             }
             catch(Exception ex)
             {
-                MessageBox.Show("There was an exception saving the file: " + ex.Message);
+                if (showMessage)
+                    MessageBox.Show("There was an exception saving the file: " + ex.Message);
             }
         }
 
@@ -560,7 +622,7 @@ namespace BYOSA_Utility
             }
         }
 
-        private void ValidateEntityManifest(PathItem filePath, string entityName, DataLakeFileSystemClient client)
+        private bool ValidateEntityManifest(string filePath, string entityName, DataLakeFileSystemClient client, string entityManifestPath)
         {
             string line = string.Empty;
             int fileColumnCount = 1;
@@ -569,6 +631,8 @@ namespace BYOSA_Utility
             string[] columnNames;
             bool attributeNameMatch = true;
             bool attributeDataTypeMatch = true;
+            bool hasErrors = false;
+            StringBuilder sb = new StringBuilder();
 
             JsonElement root;
             JsonElement attributeName;
@@ -595,20 +659,24 @@ namespace BYOSA_Utility
             string filterExpression = "EntityName = '" + entityName + "'";
             dataRow = manifest.Select(filterExpression);
 
-            //assume 1 row return for the entity for the time being; update to handle different logic in the future
-            DataLakeFileClient entityManifest = client.GetFileClient(dataRow[0]["EntityManifestPath"].ToString());
-            DataLakeFileClient fileClient = client.GetFileClient(filePath.Name);
+
+            DataLakeFileClient entityManifest = client.GetFileClient(entityManifestPath);
+            DataLakeFileClient fileClient = client.GetFileClient(filePath);
             Response<FileDownloadInfo> downloadResponseFile = fileClient.Read();
             Response<FileDownloadInfo> downloadResponseEntity = entityManifest.Read();
+
+            Log("Entity Manifest Path: " + entityManifest.Name);
+            Log("Entity File Path: " + filePath);
 
             //download the csv file
             using (StreamReader streamReaderFile = new StreamReader(downloadResponseFile.Value.Content))
             {
-                if (filePath.Name.EndsWith("csv"))
+                if (filePath.EndsWith("csv"))
                 {
                     line = streamReaderFile.ReadLine();
                     fileColumnCount = line.Split(",").Length;
                     columnNames = line.Split(",");
+
                     for(int k=0; k< columnNames.Length; k++)
                     {
                         entityStructure.Rows.Add(columnNames[k].ToString(), k + 1, "string");
@@ -668,16 +736,16 @@ namespace BYOSA_Utility
 
                 while (attributes.MoveNext())
                 {
+                    
                     if (attributes.Current.TryGetProperty("name", out attributeName) == false)
                     {
                         throw new Exception("The attribute name cannot be found");
                     }
-
+                  
                     if (attributes.Current.TryGetProperty("dataFormat", out dataType) == false)
                     {
                         throw new Exception("The data format cannot be found");
                     }
-
                     manifestStructure.Rows.Add(attributeName.ToString(), manifestColumnCount.ToString(), dataType.ToString());
                     //increment the counter
                     manifestColumnCount++;
@@ -689,34 +757,97 @@ namespace BYOSA_Utility
             //look for the number of rows
             if (manifestStructure.Rows.Count == entityStructure.Rows.Count)
             {
-                UpdateStatus("Entity manifest and file has matching attribute count");
-
+                UpdateStatus("Attribute Counts: Match (" + manifestStructure.Rows.Count.ToString() + ")");
                 //compare colum names, data types
                 for (int x = 0; x < manifestStructure.Rows.Count; x++)
                 {
                     if(manifestStructure.Rows[x]["AttributeName"].ToString().ToLower() != entityStructure.Rows[x]["AttributeName"].ToString().ToLower())
                     {
-                        UpdateStatus("Warning: There is a mismatch in attribute name in position " + x.ToString());
+                        if (x == 0)
+                        {
+                            sb.AppendLine();
+                            sb.AppendLine("--- Attribute Details ---");
+                        }
+                        //increment the counter in the logs to reflect the output from the data tables
+                        sb.AppendLine("Mismatch in attribute name in position " + x.ToString() + 1);
                         attributeNameMatch = false;
+                        hasErrors = true;
                     }
 
                     if (manifestStructure.Rows[x]["DataType"].ToString().ToLower() != entityStructure.Rows[x]["DataType"].ToString().ToLower())
                     {
-                        UpdateStatus("Warning: There is a mismatch in attribute data types in position " + x.ToString());
+                        //only add this formating if it hasn't been added and on the first loop
+                        if ((x == 0) && (attributeNameMatch == true))
+                        {
+                            sb.AppendLine();
+                            sb.AppendLine("--- Start Attribute Details ---");
+                        }
+
+                        if (attributeNameMatch)
+                        {
+                            sb.AppendLine("Mismatch in data types for " + manifestStructure.Rows[x]["AttributeName"].ToString());
+                            
+                        }
+                        else
+                        {
+                            //increment the counter in the logs to reflect the output from the data tables
+                            sb.AppendLine("Mismatch in data types in position " + x.ToString() + 1);
+                        }
+                        hasErrors = true;
                         attributeDataTypeMatch = false;
                     }
                 }
 
+               
+
                 if (attributeNameMatch)
-                    UpdateStatus("Attribute names matched");
+                    UpdateStatus("Attribute Names: Match");
+                else
+                    UpdateStatus("Attribute Names: Mismatch");
 
                 if (attributeDataTypeMatch)
-                    UpdateStatus("Attribute date types matched");
+                    UpdateStatus("Attribute Data Types: Match");
+                else
+                    UpdateStatus("Attribute Data Types: Mismatch");
             }
             else
             {
-                UpdateStatus("Warning: Entity manifest and file does not matching attribute count");
+                UpdateStatus("Attribute Counts: Mismatch - Manifest: " + manifestStructure.Rows.Count.ToString() + " - File: " + entityStructure.Rows.Count.ToString());
+                hasErrors = true;
             }
+            sb.AppendLine("--- End Attribute Details ---");
+            Log(sb.ToString());
+            
+            //store the results into a data table to be used in CSV file save
+            for (int x = 0; x < manifestStructure.Rows.Count; x++)
+            {
+                resultsDetails.Rows.Add("Manifest", entityName, manifestStructure.Rows[x]["AttributeOrder"].ToString(), manifestStructure.Rows[x]["AttributeName"].ToString(), manifestStructure.Rows[x]["DataType"].ToString());
+            }
+           
+            for (int x = 0; x < entityStructure.Rows.Count; x++)
+            {
+                resultsDetails.Rows.Add("File", entityName, entityStructure.Rows[x]["AttributeOrder"].ToString(), entityStructure.Rows[x]["AttributeName"].ToString(), entityStructure.Rows[x]["DataType"].ToString());
+            }
+            return hasErrors;
+        }
+
+        private void Log(string message)
+        {
+            log.AppendLine(message);
+        }
+        
+        private void SaveLogFiles()
+        {
+            //save the details in a text file
+            string filePathName = Directory.GetCurrentDirectory() + @"\cdmutilitylog.txt";
+            //this code section write stringbuilder content to physical text file.
+            using (StreamWriter swriter = new StreamWriter(filePathName, false))
+            {
+                swriter.Write(log.ToString());
+            }
+
+            //save the comparison into csv file
+            SaveCSVFile(resultsDetails, "cdmutilityresults.csv", false);
         }
     }
 }

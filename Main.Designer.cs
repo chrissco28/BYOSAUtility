@@ -51,6 +51,7 @@ namespace BYOSA_Utility
             this.Entity = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Regex = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.FileName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.FileCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lblResults = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -135,7 +136,7 @@ namespace BYOSA_Utility
             this.txtManifestContent.Multiline = true;
             this.txtManifestContent.Name = "txtManifestContent";
             this.txtManifestContent.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtManifestContent.Size = new System.Drawing.Size(812, 279);
+            this.txtManifestContent.Size = new System.Drawing.Size(812, 204);
             this.txtManifestContent.TabIndex = 8;
             this.txtManifestContent.TabStop = false;
             // 
@@ -230,7 +231,8 @@ namespace BYOSA_Utility
             this.gridResults.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Entity,
             this.Regex,
-            this.FileName});
+            this.FileName,
+            this.FileCount});
             this.gridResults.Location = new System.Drawing.Point(183, 804);
             this.gridResults.Name = "gridResults";
             this.gridResults.ReadOnly = true;
@@ -263,6 +265,13 @@ namespace BYOSA_Utility
             this.FileName.MinimumWidth = 8;
             this.FileName.Name = "FileName";
             this.FileName.ReadOnly = true;
+            // 
+            // FileCount
+            // 
+            this.FileCount.HeaderText = "FileCount";
+            this.FileCount.MinimumWidth = 8;
+            this.FileCount.Name = "FileCount";
+            this.FileCount.ReadOnly = true;
             // 
             // lblResults
             // 
@@ -356,10 +365,11 @@ namespace BYOSA_Utility
         private System.Windows.Forms.Label lblResults;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
         private System.Windows.Forms.DataGridViewTextBoxColumn Entity;
         private System.Windows.Forms.DataGridViewTextBoxColumn Regex;
         private System.Windows.Forms.DataGridViewTextBoxColumn FileName;
-        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
+        private System.Windows.Forms.DataGridViewTextBoxColumn FileCount;
     }
 }
 
