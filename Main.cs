@@ -15,6 +15,7 @@ using Azure.Storage;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using Microsoft.VisualBasic.FileIO;
 
 namespace BYOSA_Utility
 {
@@ -27,48 +28,11 @@ namespace BYOSA_Utility
         DataTable manifest = new DataTable();
         StringBuilder log = new StringBuilder();
         DataTable resultsDetails = new DataTable();
+        string messageHeader = "CDM Manifest Utility";
 
-        private void btnConnect_Click(object sender, EventArgs e)
-        {
-
-
-
-            if (txtAccountName.Text.Length == 0)
-            {
-                MessageBox.Show("The Account Name is missing", "CDM Manifest Utility");
-                txtAccountName.Focus();
-                return;
-            }
-
-            if (txtAccountKey.Text.Length == 0)
-            {
-                MessageBox.Show("The Account Key is missing", "CDM Manifest Utility");
-                txtAccountKey.Focus();
-                return;
-            }
-
-            if (txtContainer.Text.Length == 0)
-            {
-                MessageBox.Show("The container name is missing", "CDM Manifest Utility");
-                txtContainer.Focus();
-                return;
-            }
-
-            try
-            {
-                StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(txtAccountName.Text, txtAccountKey.Text);
-                DataLakeServiceClient client = GetDataLakeServiceClient(txtAccountName.Text, txtAccountKey.Text, sharedKeyCredential);
-                DataLakeFileSystemClient fileClient = client.GetFileSystemClient(txtContainer.Text);
-
-                if (client.Uri != null)
-                {
-                    MessageBox.Show("Connection successful: " + client.Uri, "CDM Manifest Utility");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("There was an error connecting to the container: " + ex.Message, "CDM Manifest Utility");
-            }
+        private void btnTest_Click(object sender, EventArgs e)
+        {   
+            DataLakeServiceClient client = GetConnection();
         }
 
         private static DataLakeServiceClient GetDataLakeServiceClient(string accountName, string accountKey, StorageSharedKeyCredential sharedKeyCredential)
@@ -241,11 +205,11 @@ namespace BYOSA_Utility
                         }
                         catch (JsonException jx)
                         {
-                            MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, "CDM Manifest Utility");
+                            MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, messageHeader);
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show("An error has occurred: " + ex.Message, "CDM Manifest Utility");
+                            MessageBox.Show("An error has occurred: " + ex.Message, messageHeader);
                         }
                         finally
                         {
@@ -368,13 +332,13 @@ namespace BYOSA_Utility
             }
             catch (JsonException jsex)
             {
-                MessageBox.Show("The Manifest file does not represent a JSON structure: " + jsex.Message, "CDM Manifest Utility");
+                MessageBox.Show("The Manifest file does not represent a JSON structure: " + jsex.Message, messageHeader);
                 UpdateStatus("Error: Manifest file is not valid");
                 return valid;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error has occurred: " + ex.Message, "CDM Manifest Utility");
+                MessageBox.Show("An error has occurred: " + ex.Message, messageHeader);
                 UpdateStatus("Error: An error has occurred: " + ex.Message);
                 return valid;
             }
@@ -407,6 +371,9 @@ namespace BYOSA_Utility
             //clear status and results grid
             txtResults.Text = "";
             gridResults.Rows.Clear();
+            
+            //clear the log 
+            log.Clear();
 
             UpdateStatus("Starting Regex Validation");
             UpdateStatus("--------------------");
@@ -416,55 +383,64 @@ namespace BYOSA_Utility
                 try
                 {
                     DataLakeServiceClient client = GetConnection();
-                    DataLakeFileSystemClient fileClient = client.GetFileSystemClient(txtContainer.Text);
-                    StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(txtAccountName.Text, txtAccountKey.Text);
 
-                    for (int i = 0; i < manifest.Rows.Count; i++)
-                    {
-                        if (manifest.Rows[i][2].ToString().Length > 0)
+                    if (client != null)
+                    { 
+                        DataLakeFileSystemClient fileClient = client.GetFileSystemClient(txtContainer.Text);
+                        StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(txtAccountName.Text, txtAccountKey.Text);
+
+                        if (!fileClient.Exists())
                         {
-                            entity = manifest.Rows[i][0].ToString();
-                            entityPath = "/" + root + "/" + manifest.Rows[i][2].ToString();
-                            regEx = manifest.Rows[i][3].ToString();
-
-                            UpdateStatus("Validating Regex Patterns For " + entity);
-
-                            //get all the items within the container; results are stored in data table
-                            await ListContainersInDirectoryAsync(fileClient, sharedKeyCredential, entityPath, regEx, entity);
+                            throw new Exception("There was a problem connecting to the container");
                         }
-                    }
-                    UpdateStatus("Completed Regex Validation");
-                    UpdateStatus("--------------------");
-                    UpdateStatus("Starting Entity Manifest Validation");
-                    //go through each entity in the manifest table
-                    foreach (DataRow entityRow in manifest.Rows)
-                    {
-                        entity = entityRow["EntityName"].ToString();
-                        entityManifestPath = entityRow["EntityManifestPath"].ToString();
-                        entityChecked = false;
-                        //validate the entity and manifest files
-                        foreach (DataGridViewRow row in gridResults.Rows)
+
+                        for (int i = 0; i < manifest.Rows.Count; i++)
                         {
-                            if ((row.Cells["Regex"].Value.ToString() == "True") && (row.Cells["Entity"].Value.ToString() == entity) && (entityChecked == false))
+                            if (manifest.Rows[i][2].ToString().Length > 0)
                             {
-                                UpdateStatus("--------------------");
-                                UpdateStatus("Starting " + entity + " Manifest Validation");
-                                bool hasErrors = ValidateEntityManifest(row.Cells["FileName"].Value.ToString(), entity, fileClient, entityManifestPath);
+                                entity = manifest.Rows[i][0].ToString();
+                                entityPath = "/" + root + "/" + manifest.Rows[i][2].ToString();
+                                regEx = manifest.Rows[i][3].ToString();
 
-                                if (hasErrors)
-                                    UpdateStatus("Completed " + entity + " Manifest Validation With Errors");
-                                else
-                                    UpdateStatus("Completed " + entity + " Manifest Validation Without Errors");
+                                UpdateStatus("Validating Regex Patterns For " + entity);
 
-                                entityChecked = true;
+                                //get all the items within the container; results are stored in data table
+                                await ListContainersInDirectoryAsync(fileClient, sharedKeyCredential, entityPath, regEx, entity);
                             }
                         }
+                        UpdateStatus("Completed Regex Validation");
+                        UpdateStatus("--------------------");
+                        UpdateStatus("Starting Entity Manifest Validation");
+                        //go through each entity in the manifest table
+                        foreach (DataRow entityRow in manifest.Rows)
+                        {
+                            entity = entityRow["EntityName"].ToString();
+                            entityManifestPath = entityRow["EntityManifestPath"].ToString();
+                            entityChecked = false;
+                            //validate the entity and manifest files
+                            foreach (DataGridViewRow row in gridResults.Rows)
+                            {
+                                if ((row.Cells["Regex"].Value.ToString() == "True") && (row.Cells["Entity"].Value.ToString() == entity) && (entityChecked == false))
+                                {
+                                    UpdateStatus("--------------------");
+                                    UpdateStatus("Starting " + entity + " Manifest Validation");
+                                    bool hasErrors = ValidateEntityManifest(row.Cells["FileName"].Value.ToString(), entity, fileClient, entityManifestPath);
+
+                                    if (hasErrors)
+                                        UpdateStatus("Completed " + entity + " Manifest Validation With Warnings");
+                                    else
+                                        UpdateStatus("Completed " + entity + " Manifest Validation Without Warnings");
+
+                                    entityChecked = true;
+                                }
+                            }
+                        }
+                        UpdateStatus("--------------------");
+                        UpdateStatus("Completed Entity Manifest Validation");
+                        UpdateStatus("--------------------");
+                        SaveLogFiles();
+                        UpdateStatus("Validation Complete. Log Files Generated");
                     }
-                    UpdateStatus("--------------------");
-                    UpdateStatus("Completed Entity Manifest Validation");
-                    UpdateStatus("--------------------");
-                    SaveLogFiles();
-                    UpdateStatus("Validation Complete. Log Files Generated");
                 }
                 catch (Exception ex)
                 {
@@ -496,16 +472,21 @@ namespace BYOSA_Utility
             {
                 StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(txtAccountName.Text, txtAccountKey.Text);
                 DataLakeServiceClient client = GetDataLakeServiceClient(txtAccountName.Text, txtAccountKey.Text, sharedKeyCredential);
+                DataLakeFileSystemClient fileClient = client.GetFileSystemClient(txtContainer.Text);
 
-                if (client.Uri != null)
+                if (client.Uri != null && fileClient.Exists())
                 {
                     UpdateStatus("Connection successful: " + client.Uri);
+                }
+                else
+                {
+                    throw new Exception("There was an error connecting to the container. Verify connection details");
                 }
                 return client;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("There was an error connecting to the container: " + ex.Message, "CDM Manifest Utility");
+                UpdateStatus(ex.Message);
                 return null;
 
             }
@@ -598,12 +579,12 @@ namespace BYOSA_Utility
                 sw.Close();
                 
                 if(showMessage)
-                    MessageBox.Show("The file was successfully saved");
+                    MessageBox.Show("The file was successfully saved", messageHeader);
             }
             catch(Exception ex)
             {
                 if (showMessage)
-                    MessageBox.Show("There was an exception saving the file: " + ex.Message);
+                    MessageBox.Show("There was an exception saving the file: " + ex.Message, messageHeader);
             }
         }
 
@@ -625,15 +606,19 @@ namespace BYOSA_Utility
         private bool ValidateEntityManifest(string filePath, string entityName, DataLakeFileSystemClient client, string entityManifestPath)
         {
             string line = string.Empty;
-            int fileColumnCount = 1;
             int manifestColumnCount = 1;
             string manifestContent = string.Empty;
-            string[] columnNames;
+            string[] columnValue;
             bool attributeNameMatch = true;
             bool attributeDataTypeMatch = true;
             bool hasErrors = false;
+            bool failedParse = false;
+            string attributeDataType = "string";
             StringBuilder sb = new StringBuilder();
-
+            DateTime DTresult;
+            decimal Decresult;
+            int Intresult;
+           
             JsonElement root;
             JsonElement attributeName;
             JsonElement dataType;
@@ -659,174 +644,248 @@ namespace BYOSA_Utility
             string filterExpression = "EntityName = '" + entityName + "'";
             dataRow = manifest.Select(filterExpression);
 
-
-            DataLakeFileClient entityManifest = client.GetFileClient(entityManifestPath);
-            DataLakeFileClient fileClient = client.GetFileClient(filePath);
-            Response<FileDownloadInfo> downloadResponseFile = fileClient.Read();
-            Response<FileDownloadInfo> downloadResponseEntity = entityManifest.Read();
-
-            Log("Entity Manifest Path: " + entityManifest.Name);
-            Log("Entity File Path: " + filePath);
-
-            //download the csv file
-            using (StreamReader streamReaderFile = new StreamReader(downloadResponseFile.Value.Content))
-            {
-                if (filePath.EndsWith("csv"))
+            try
+            { 
+                DataLakeFileClient entityManifest = client.GetFileClient(entityManifestPath);
+                DataLakeFileClient fileClient = client.GetFileClient(filePath);
+            
+                //verify the connection
+                if (!entityManifest.Exists())
                 {
-                    line = streamReaderFile.ReadLine();
-                    fileColumnCount = line.Split(",").Length;
-                    columnNames = line.Split(",");
+                    throw new Exception("Unable to connect to the entity manifest container. Verify connection details and manifest");
+                }
 
-                    for(int k=0; k< columnNames.Length; k++)
+                //verify the connection
+                if (!fileClient.Exists())
+                {
+                    throw new Exception("Unable to connect to the file container. Verify connection details");
+                }
+
+                Response<FileDownloadInfo> downloadResponseFile = fileClient.Read();
+                Response<FileDownloadInfo> downloadResponseEntity = entityManifest.Read();
+
+                Log("Entity Manifest Path: " + entityManifest.Name);
+                Log("Entity File Path: " + filePath);
+
+                //read in the first row for column names and to get the initial structure
+                using (TextFieldParser fieldParser = new TextFieldParser(downloadResponseFile.Value.Content))
+                {
+                    //update to use parquet in the next release
+                    if (filePath.EndsWith("csv"))
                     {
-                        entityStructure.Rows.Add(columnNames[k].ToString(), k + 1, "string");
-                    }
-                }
-            }
+                   
+                        fieldParser.TextFieldType = FieldType.Delimited;
+                        fieldParser.Delimiters = new string[] { "," };
 
-            //download the manifest file
-            using (StreamReader streamReaderManifest = new StreamReader(downloadResponseEntity.Value.Content))
-            {
-
-                //format the JSON
-                try
-                {
-                    var options = new JsonSerializerOptions()
-                    {
-                        WriteIndented = true,
-                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                    };
-
-                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(streamReaderManifest.ReadToEnd().ToString());
-
-                    manifestContent = JsonSerializer.Serialize(jsonElement, options);
-
-                }
-                catch (JsonException jx)
-                {
-                    MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, "CDM Manifest Utility");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("An error has occurred: " + ex.Message, "CDM Manifest Utility");
-                }
-                finally
-                {
-                    Cursor.Current = Cursors.Default;
-                }
-            }
-
-            var JSONoptions = new JsonDocumentOptions()
-            {
-            };
-
-            JsonDocument document = JsonDocument.Parse(manifestContent, JSONoptions);
-
-            if (document.RootElement.TryGetProperty("definitions", out root) == false)
-            {
-                throw new Exception("The entitiies node cannot be found");
-            }
-
-            var definition = root.EnumerateArray();
-
-            while (definition.MoveNext())
-            {
-                var hasAttributes = definition.Current.GetProperty("hasAttributes");
-                var attributes = hasAttributes.EnumerateArray();
-
-                while (attributes.MoveNext())
-                {
+                        if (cmbQuote.Text == "None")
+                            fieldParser.HasFieldsEnclosedInQuotes = false;
+                        else
+                            fieldParser.HasFieldsEnclosedInQuotes = true;
                     
-                    if (attributes.Current.TryGetProperty("name", out attributeName) == false)
-                    {
-                        throw new Exception("The attribute name cannot be found");
+                        //get each of the fields
+                        columnValue = fieldParser.ReadFields();
+
+                       //first row should have column names
+                       fieldParser.ReadLine();
+
+                        //Processing row
+                        string[] columns = fieldParser.ReadFields();
+
+                        foreach (string column in columns)
+                        {
+                            entityStructure.Rows.Add(column, "string");
+                        }
+                   
+
+                        //read in a record to try the data types
+                        fieldParser.ReadLine();
+
+                       //Processing row
+                        string[] values = fieldParser.ReadFields();
+
+                        foreach (string value in values)
+                        {
+
+                            //check for the dates
+                            if (Int32.TryParse(value, out Intresult) && failedParse == false)
+                            {
+                                attributeDataType = "int32";
+                            }
+                            else if (Decimal.TryParse(value, out Decresult) && failedParse == false)
+                            {
+                                attributeDataType = "decimal";
+                            }
+                            else if (DateTime.TryParse(value, out DTresult) && failedParse == false)
+                            {
+                                attributeDataType = "dateTime";
+                            }
+                            else
+                            {
+                                failedParse = true;
+                                attributeDataType = "string";
+                            }
+                        }
                     }
-                  
-                    if (attributes.Current.TryGetProperty("dataFormat", out dataType) == false)
-                    {
-                        throw new Exception("The data format cannot be found");
-                    }
-                    manifestStructure.Rows.Add(attributeName.ToString(), manifestColumnCount.ToString(), dataType.ToString());
-                    //increment the counter
-                    manifestColumnCount++;
                 }
-            }
+
+                //download the manifest file
+                using (StreamReader streamReaderManifest = new StreamReader(downloadResponseEntity.Value.Content))
+                {
+
+                    //format the JSON
+                    try
+                    {
+                        var options = new JsonSerializerOptions()
+                        {
+                            WriteIndented = true,
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        };
+
+                        var jsonElement = JsonSerializer.Deserialize<JsonElement>(streamReaderManifest.ReadToEnd().ToString());
+
+                        manifestContent = JsonSerializer.Serialize(jsonElement, options);
+
+                    }
+                    catch (JsonException jx)
+                    {
+                        MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, messageHeader);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("An error has occurred: " + ex.Message, messageHeader);
+                    }
+                    finally
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                }
+
+                var JSONoptions = new JsonDocumentOptions()
+                {
+                };
+
+                JsonDocument document = JsonDocument.Parse(manifestContent, JSONoptions);
+
+                if (document.RootElement.TryGetProperty("definitions", out root) == false)
+                {
+                    throw new Exception("The entities node cannot be found");
+                }
+
+                var definition = root.EnumerateArray();
+
+                while (definition.MoveNext())
+                {
+                    var hasAttributes = definition.Current.GetProperty("hasAttributes");
+                    var attributes = hasAttributes.EnumerateArray();
+
+                    while (attributes.MoveNext())
+                    {
+                    
+                        if (attributes.Current.TryGetProperty("name", out attributeName) == false)
+                        {
+                            throw new Exception("The attribute name cannot be found");
+                        }
+                  
+                        if (attributes.Current.TryGetProperty("dataFormat", out dataType) == false)
+                        {
+                            throw new Exception("The data format cannot be found");
+                        }
+                        manifestStructure.Rows.Add(attributeName.ToString(), manifestColumnCount.ToString(), dataType.ToString());
+                        //increment the counter
+                        manifestColumnCount++;
+                    }
+                }
 
 
-            //compare the two tables now
-            //look for the number of rows
-            if (manifestStructure.Rows.Count == entityStructure.Rows.Count)
-            {
-                UpdateStatus("Attribute Counts: Match (" + manifestStructure.Rows.Count.ToString() + ")");
-                //compare colum names, data types
+                //compare the two tables now
+                //look for the number of rows
+                if (manifestStructure.Rows.Count == entityStructure.Rows.Count)
+                {
+                    UpdateStatus("Attribute Counts: Match (" + manifestStructure.Rows.Count.ToString() + ")");
+                    //compare colum names, data types
+                    for (int x = 0; x < manifestStructure.Rows.Count; x++)
+                    {
+                        //if the column headers are in the file do the check
+                        if (chkHasHeaders.Checked)
+                        { 
+                            if(manifestStructure.Rows[x]["AttributeName"].ToString().ToLower() != entityStructure.Rows[x]["AttributeName"].ToString().ToLower())
+                            {
+                                if (x == 0)
+                                {
+                                    sb.AppendLine();
+                                    sb.AppendLine("--- Attribute Details ---");
+                                }
+                                //increment the counter in the logs to reflect the output from the data tables
+                                sb.AppendLine("Mismatch in attribute name in position " + x.ToString() + 1);
+                                attributeNameMatch = false;
+                                hasErrors = true;
+                            }
+                        }
+
+                        if (manifestStructure.Rows[x]["DataType"].ToString().ToLower() != entityStructure.Rows[x]["DataType"].ToString().ToLower())
+                        {
+                            //only add this formating if it hasn't been added and on the first loop
+                            if ((x == 0) && (attributeNameMatch == true))
+                            {
+                                sb.AppendLine();
+                                sb.AppendLine("--- Start Attribute Details ---");
+                            }
+
+                            if (attributeNameMatch)
+                            {
+                                sb.AppendLine("Mismatch in data types for " + manifestStructure.Rows[x]["AttributeName"].ToString());
+                            
+                            }
+                            else
+                            {
+                                //increment the counter in the logs to reflect the output from the data tables
+                                sb.AppendLine("Mismatch in data types in position " + x.ToString() + 1);
+                            }
+                            hasErrors = true;
+                            attributeDataTypeMatch = false;
+                        }
+                    }
+
+
+                    if (chkHasHeaders.Checked)
+                    {
+                        if (attributeNameMatch)
+                            UpdateStatus("Attribute Names: Match");
+                        else
+                            UpdateStatus("Attribute Names: Mismatch");
+                    }
+                    else
+                        UpdateStatus("Attribute Names: Skipped");
+
+
+                    if (attributeDataTypeMatch)
+                        UpdateStatus("Attribute Data Types: Match");
+                    else
+                        UpdateStatus("Attribute Data Types: Mismatch");
+                }
+                else
+                {
+                    UpdateStatus("Attribute Counts: Mismatch - Manifest: " + manifestStructure.Rows.Count.ToString() + " - File: " + entityStructure.Rows.Count.ToString());
+                    hasErrors = true;
+                }
+                sb.AppendLine("--- End Attribute Details ---");
+                Log(sb.ToString());
+            
+                //store the results into a data table to be used in CSV file save
                 for (int x = 0; x < manifestStructure.Rows.Count; x++)
                 {
-                    if(manifestStructure.Rows[x]["AttributeName"].ToString().ToLower() != entityStructure.Rows[x]["AttributeName"].ToString().ToLower())
-                    {
-                        if (x == 0)
-                        {
-                            sb.AppendLine();
-                            sb.AppendLine("--- Attribute Details ---");
-                        }
-                        //increment the counter in the logs to reflect the output from the data tables
-                        sb.AppendLine("Mismatch in attribute name in position " + x.ToString() + 1);
-                        attributeNameMatch = false;
-                        hasErrors = true;
-                    }
-
-                    if (manifestStructure.Rows[x]["DataType"].ToString().ToLower() != entityStructure.Rows[x]["DataType"].ToString().ToLower())
-                    {
-                        //only add this formating if it hasn't been added and on the first loop
-                        if ((x == 0) && (attributeNameMatch == true))
-                        {
-                            sb.AppendLine();
-                            sb.AppendLine("--- Start Attribute Details ---");
-                        }
-
-                        if (attributeNameMatch)
-                        {
-                            sb.AppendLine("Mismatch in data types for " + manifestStructure.Rows[x]["AttributeName"].ToString());
-                            
-                        }
-                        else
-                        {
-                            //increment the counter in the logs to reflect the output from the data tables
-                            sb.AppendLine("Mismatch in data types in position " + x.ToString() + 1);
-                        }
-                        hasErrors = true;
-                        attributeDataTypeMatch = false;
-                    }
+                    resultsDetails.Rows.Add("Manifest", entityName, manifestStructure.Rows[x]["AttributeOrder"].ToString(), manifestStructure.Rows[x]["AttributeName"].ToString(), manifestStructure.Rows[x]["DataType"].ToString());
                 }
-
-               
-
-                if (attributeNameMatch)
-                    UpdateStatus("Attribute Names: Match");
-                else
-                    UpdateStatus("Attribute Names: Mismatch");
-
-                if (attributeDataTypeMatch)
-                    UpdateStatus("Attribute Data Types: Match");
-                else
-                    UpdateStatus("Attribute Data Types: Mismatch");
-            }
-            else
-            {
-                UpdateStatus("Attribute Counts: Mismatch - Manifest: " + manifestStructure.Rows.Count.ToString() + " - File: " + entityStructure.Rows.Count.ToString());
-                hasErrors = true;
-            }
-            sb.AppendLine("--- End Attribute Details ---");
-            Log(sb.ToString());
-            
-            //store the results into a data table to be used in CSV file save
-            for (int x = 0; x < manifestStructure.Rows.Count; x++)
-            {
-                resultsDetails.Rows.Add("Manifest", entityName, manifestStructure.Rows[x]["AttributeOrder"].ToString(), manifestStructure.Rows[x]["AttributeName"].ToString(), manifestStructure.Rows[x]["DataType"].ToString());
-            }
            
-            for (int x = 0; x < entityStructure.Rows.Count; x++)
+                for (int x = 0; x < entityStructure.Rows.Count; x++)
+                {
+                    resultsDetails.Rows.Add("File", entityName, entityStructure.Rows[x]["AttributeOrder"].ToString(), entityStructure.Rows[x]["AttributeName"].ToString(), entityStructure.Rows[x]["DataType"].ToString());
+                }
+            }
+            catch (Exception ex)
             {
-                resultsDetails.Rows.Add("File", entityName, entityStructure.Rows[x]["AttributeOrder"].ToString(), entityStructure.Rows[x]["AttributeName"].ToString(), entityStructure.Rows[x]["DataType"].ToString());
+                MessageBox.Show(ex.Message, messageHeader);
+                hasErrors = true;
             }
             return hasErrors;
         }
@@ -848,6 +907,14 @@ namespace BYOSA_Utility
 
             //save the comparison into csv file
             SaveCSVFile(resultsDetails, "cdmutilityresults.csv", false);
+        }
+
+        private void chkHasHeaders_CheckedChanged(object sender, EventArgs e)
+        {
+            if(chkHasHeaders.Checked==false)
+            {
+                MessageBox.Show("Warning: Without headers the utility cannot compare entity field names.", messageHeader);
+            }
         }
     }
 }

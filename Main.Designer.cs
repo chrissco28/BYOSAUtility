@@ -55,21 +55,26 @@ namespace BYOSA_Utility
             this.lblResults = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.cmbQuote = new System.Windows.Forms.ComboBox();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.chkHasHeaders = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.gridResults)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnTest
             // 
-            this.btnTest.Location = new System.Drawing.Point(859, 94);
+            this.btnTest.Location = new System.Drawing.Point(851, 94);
             this.btnTest.Name = "btnTest";
             this.btnTest.Size = new System.Drawing.Size(112, 34);
             this.btnTest.TabIndex = 4;
             this.btnTest.Text = "Test";
             this.btnTest.UseVisualStyleBackColor = true;
-            this.btnTest.Click += new System.EventHandler(this.btnConnect_Click);
+            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // label1
             // 
@@ -105,11 +110,11 @@ namespace BYOSA_Utility
             // 
             // btnOpenManifest
             // 
-            this.btnOpenManifest.Location = new System.Drawing.Point(859, 77);
+            this.btnOpenManifest.Location = new System.Drawing.Point(851, 77);
             this.btnOpenManifest.Name = "btnOpenManifest";
             this.btnOpenManifest.Size = new System.Drawing.Size(112, 34);
             this.btnOpenManifest.TabIndex = 6;
-            this.btnOpenManifest.Text = "Open";
+            this.btnOpenManifest.Text = "Browse";
             this.btnOpenManifest.UseVisualStyleBackColor = true;
             this.btnOpenManifest.Click += new System.EventHandler(this.btnOpenManifest_Click);
             // 
@@ -132,11 +137,11 @@ namespace BYOSA_Utility
             // 
             // txtManifestContent
             // 
-            this.txtManifestContent.Location = new System.Drawing.Point(159, 121);
+            this.txtManifestContent.Location = new System.Drawing.Point(159, 131);
             this.txtManifestContent.Multiline = true;
             this.txtManifestContent.Name = "txtManifestContent";
             this.txtManifestContent.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtManifestContent.Size = new System.Drawing.Size(812, 204);
+            this.txtManifestContent.Size = new System.Drawing.Size(812, 130);
             this.txtManifestContent.TabIndex = 8;
             this.txtManifestContent.TabStop = false;
             // 
@@ -151,7 +156,7 @@ namespace BYOSA_Utility
             // 
             // btnValidate
             // 
-            this.btnValidate.Location = new System.Drawing.Point(765, 1136);
+            this.btnValidate.Location = new System.Drawing.Point(851, 25);
             this.btnValidate.Name = "btnValidate";
             this.btnValidate.Size = new System.Drawing.Size(112, 34);
             this.btnValidate.TabIndex = 7;
@@ -161,26 +166,26 @@ namespace BYOSA_Utility
             // 
             // txtResults
             // 
-            this.txtResults.Location = new System.Drawing.Point(183, 619);
+            this.txtResults.Location = new System.Drawing.Point(183, 610);
             this.txtResults.Multiline = true;
             this.txtResults.Name = "txtResults";
             this.txtResults.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtResults.Size = new System.Drawing.Size(812, 161);
+            this.txtResults.Size = new System.Drawing.Size(837, 170);
             this.txtResults.TabIndex = 11;
             this.txtResults.TabStop = false;
             // 
             // lblStatus
             // 
             this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(35, 622);
+            this.lblStatus.Location = new System.Drawing.Point(39, 590);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(60, 25);
+            this.lblStatus.Size = new System.Drawing.Size(81, 25);
             this.lblStatus.TabIndex = 12;
-            this.lblStatus.Text = "Status";
+            this.lblStatus.Text = "Progress";
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(883, 1136);
+            this.btnSave.Location = new System.Drawing.Point(908, 1136);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(112, 34);
             this.btnSave.TabIndex = 8;
@@ -208,7 +213,7 @@ namespace BYOSA_Utility
             // 
             this.txtManifestRoot.Location = new System.Drawing.Point(159, 41);
             this.txtManifestRoot.Name = "txtManifestRoot";
-            this.txtManifestRoot.Size = new System.Drawing.Size(409, 31);
+            this.txtManifestRoot.Size = new System.Drawing.Size(327, 31);
             this.txtManifestRoot.TabIndex = 5;
             this.txtManifestRoot.Text = "/sampleRootFolder/sampleChildFolder/";
             this.txtManifestRoot.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtManifestRoot_KeyDown);
@@ -238,7 +243,7 @@ namespace BYOSA_Utility
             this.gridResults.ReadOnly = true;
             this.gridResults.RowHeadersWidth = 62;
             this.gridResults.RowTemplate.Height = 33;
-            this.gridResults.Size = new System.Drawing.Size(812, 326);
+            this.gridResults.Size = new System.Drawing.Size(837, 326);
             this.gridResults.TabIndex = 18;
             this.gridResults.TabStop = false;
             // 
@@ -278,9 +283,9 @@ namespace BYOSA_Utility
             this.lblResults.AutoSize = true;
             this.lblResults.Location = new System.Drawing.Point(35, 804);
             this.lblResults.Name = "lblResults";
-            this.lblResults.Size = new System.Drawing.Size(67, 25);
+            this.lblResults.Size = new System.Drawing.Size(140, 25);
             this.lblResults.TabIndex = 19;
-            this.lblResults.Text = "Results";
+            this.lblResults.Text = "Manifest Results";
             // 
             // groupBox1
             // 
@@ -309,16 +314,64 @@ namespace BYOSA_Utility
             this.groupBox2.Controls.Add(this.label3);
             this.groupBox2.Location = new System.Drawing.Point(24, 191);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(996, 422);
+            this.groupBox2.Size = new System.Drawing.Size(996, 299);
             this.groupBox2.TabIndex = 21;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Default Manifest ";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(154, 30);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(104, 25);
+            this.label5.TabIndex = 18;
+            this.label5.Text = "Quote Style";
+            // 
+            // cmbQuote
+            // 
+            this.cmbQuote.FormattingEnabled = true;
+            this.cmbQuote.Items.AddRange(new object[] {
+            "None",
+            "Double Quotes"});
+            this.cmbQuote.Location = new System.Drawing.Point(279, 30);
+            this.cmbQuote.Name = "cmbQuote";
+            this.cmbQuote.Size = new System.Drawing.Size(182, 33);
+            this.cmbQuote.TabIndex = 17;
+            this.cmbQuote.Text = "None";
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.chkHasHeaders);
+            this.groupBox3.Controls.Add(this.label5);
+            this.groupBox3.Controls.Add(this.cmbQuote);
+            this.groupBox3.Controls.Add(this.btnValidate);
+            this.groupBox3.Location = new System.Drawing.Point(26, 509);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(994, 78);
+            this.groupBox3.TabIndex = 22;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Entity Options";
+            // 
+            // chkHasHeaders
+            // 
+            this.chkHasHeaders.AutoSize = true;
+            this.chkHasHeaders.Checked = true;
+            this.chkHasHeaders.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkHasHeaders.Location = new System.Drawing.Point(496, 32);
+            this.chkHasHeaders.Name = "chkHasHeaders";
+            this.chkHasHeaders.Size = new System.Drawing.Size(138, 29);
+            this.chkHasHeaders.TabIndex = 19;
+            this.chkHasHeaders.Text = "Has Headers";
+            this.chkHasHeaders.UseVisualStyleBackColor = true;
+            this.chkHasHeaders.CheckedChanged += new System.EventHandler(this.chkHasHeaders_CheckedChanged);
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1044, 1184);
+            this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.lblResults);
@@ -326,7 +379,6 @@ namespace BYOSA_Utility
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.txtResults);
-            this.Controls.Add(this.btnValidate);
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "CDM Manifest Utility";
@@ -336,6 +388,8 @@ namespace BYOSA_Utility
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -370,6 +424,10 @@ namespace BYOSA_Utility
         private System.Windows.Forms.DataGridViewTextBoxColumn Regex;
         private System.Windows.Forms.DataGridViewTextBoxColumn FileName;
         private System.Windows.Forms.DataGridViewTextBoxColumn FileCount;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.ComboBox cmbQuote;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.CheckBox chkHasHeaders;
     }
 }
 
