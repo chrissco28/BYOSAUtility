@@ -1,5 +1,5 @@
 # BYOSAUtility
-The BYOSA Utility (AKA CDM Manifest Utility) is designed to validate and test default manifest files for Customer Insights solutions that are using the attach to Common Data Model (CDM) data ingestion approach. The tool validates:
+The CDM Manifest Utility (AKA BYOSA Utility) is designed to validate and test default and entity manifest files for Customer Insights solutions that are using the attach to Common Data Model (CDM) data ingestion approach. The tool validates:
 1) The manifest file is a properly structure JSON file
 2) The critical CDM elements are present within the manifest file
 3) The location of the files within the Azure Data Lake is valid
@@ -8,7 +8,7 @@ The BYOSA Utility (AKA CDM Manifest Utility) is designed to validate and test de
 6) Two log files are generated in addition to the results grid. The files are saved in the same location the utility is executed. One file (.txt) provides detailed notes of the analysis and the second file (csv) provides the comparison of the attributes between the file and entity manifest.
 
 Instructions:
-1) To connection the Azure Data Lake, enter in the account name, key, and container name
+1) To connection the Azure Data Lake, enter in the account name, key, and container name. NOTE: All connection details to the data lake are case sensitve
 2) Update the folder root location where the default manifest file is stored within the data lake.
 3) Select the default manifest file and/or paste the manifest contents
 Click on Validate
