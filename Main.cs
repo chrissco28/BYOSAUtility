@@ -465,7 +465,7 @@ namespace BYOSA_Utility
 
             if (txtContainer.Text.Length == 0)
             {
-                throw new Exception("The container name is missing");
+                throw new Exception("The Container Name is missing");
             }
 
             try
