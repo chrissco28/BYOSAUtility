@@ -9,7 +9,7 @@ The CDM Manifest Utility (AKA BYOSA Utility) is designed to validate and test de
 
 Instructions:
 1) To connection the Azure Data Lake, enter in the account name, key, and container name. NOTE: All connection details to the data lake are case sensitve
-2) Update the folder root location where the default manifest file is stored within the data lake.
+2) Update the folder root location where the default manifest file is stored within the data lake. If the default manifest file is at the root location use / or click on "Root". 
 3) Select the default manifest file and/or paste the manifest contents
 Click on Validate
 
