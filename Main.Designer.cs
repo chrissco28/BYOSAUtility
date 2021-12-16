@@ -55,6 +55,7 @@ namespace BYOSA_Utility
             this.lblResults = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.chkRoot = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.cmbQuote = new System.Windows.Forms.ComboBox();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
@@ -215,7 +216,7 @@ namespace BYOSA_Utility
             this.txtManifestRoot.Name = "txtManifestRoot";
             this.txtManifestRoot.Size = new System.Drawing.Size(327, 31);
             this.txtManifestRoot.TabIndex = 5;
-            this.txtManifestRoot.Text = "/sampleRootFolder/sampleChildFolder/";
+            this.txtManifestRoot.Text = "/sampleFolder/sampleChildFolder/";
             this.txtManifestRoot.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtManifestRoot_KeyDown);
             // 
             // label4
@@ -305,6 +306,7 @@ namespace BYOSA_Utility
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.chkRoot);
             this.groupBox2.Controls.Add(this.btnOpenManifest);
             this.groupBox2.Controls.Add(this.lblManifestFile);
             this.groupBox2.Controls.Add(this.txtManifestPath);
@@ -318,6 +320,17 @@ namespace BYOSA_Utility
             this.groupBox2.TabIndex = 21;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Default Manifest ";
+            // 
+            // chkRoot
+            // 
+            this.chkRoot.AutoSize = true;
+            this.chkRoot.Location = new System.Drawing.Point(510, 41);
+            this.chkRoot.Name = "chkRoot";
+            this.chkRoot.Size = new System.Drawing.Size(76, 29);
+            this.chkRoot.TabIndex = 17;
+            this.chkRoot.Text = "Root";
+            this.chkRoot.UseVisualStyleBackColor = true;
+            this.chkRoot.CheckedChanged += new System.EventHandler(this.chkRoot_CheckedChanged);
             // 
             // label5
             // 
@@ -428,6 +441,7 @@ namespace BYOSA_Utility
         private System.Windows.Forms.ComboBox cmbQuote;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.CheckBox chkHasHeaders;
+        private System.Windows.Forms.CheckBox chkRoot;
     }
 }
 

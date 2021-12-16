@@ -313,7 +313,14 @@ namespace BYOSA_Utility
                         for (int i = 0; i < entityManifestPaths.Length; i++)
                         {
                             if (i == 0)
-                                entityManifestPath = txtManifestRoot.Text.ToString();
+                                if (chkRoot.Checked)
+                                {
+                                    entityManifestPath = txtManifestRoot.Text.ToString();
+                                }
+                                else
+                                {
+                                    entityManifestPath = "/";
+                                }
 
                             if (i + 1 != entityManifestPaths.Length)
                                 entityManifestPath = entityManifestPath + "/" + entityManifestPaths[i].ToString();
@@ -358,14 +365,21 @@ namespace BYOSA_Utility
             bool entityChecked = false;
             string entityManifestPath = string.Empty;
 
-            //remove the path if there is one
-            if (txtManifestRoot.Text.StartsWith("/"))
+            if (!chkRoot.Checked)
             { 
-                root = txtManifestRoot.Text.Replace("/","");
+                //remove the path if there is one
+                if (txtManifestRoot.Text.StartsWith("/"))
+                { 
+                    root = txtManifestRoot.Text.Replace("/","");
+                }
+                else
+                {
+                    root = txtManifestRoot.Text;
+                }
             }
             else
             {
-                root = txtManifestRoot.Text;
+                root = string.Empty;
             }
 
             //clear status and results grid
@@ -597,7 +611,7 @@ namespace BYOSA_Utility
 
         private void ClearManifestSample()
         {
-            if (txtManifestRoot.Text == @"/sampleRootFolder/sampleChildFolder/")
+            if (txtManifestRoot.Text == @"/sampleFolder/sampleFolder/")
             {
                 txtManifestRoot.Clear();
             }
@@ -915,6 +929,17 @@ namespace BYOSA_Utility
             {
                 MessageBox.Show("Warning: Without headers the utility cannot compare entity field names.", messageHeader);
             }
+        }
+
+        private void chkRoot_CheckedChanged(object sender, EventArgs e)
+        {
+            if (chkRoot.Checked)
+            { 
+                txtManifestRoot.Enabled = false;
+                txtManifestRoot.Text = "/";
+            }
+            else
+                txtManifestRoot.Enabled = true;
         }
     }
 }
