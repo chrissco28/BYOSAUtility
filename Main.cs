@@ -313,7 +313,7 @@ namespace BYOSA_Utility
                         for (int i = 0; i < entityManifestPaths.Length; i++)
                         {
                             if (i == 0)
-                                if (chkRoot.Checked)
+                                if (!chkRoot.Checked)
                                 {
                                     entityManifestPath = txtManifestRoot.Text.ToString();
                                 }
@@ -321,7 +321,7 @@ namespace BYOSA_Utility
                                 {
                                     entityManifestPath = "/";
                                 }
-
+                                
                             if (i + 1 != entityManifestPaths.Length)
                                 entityManifestPath = entityManifestPath + "/" + entityManifestPaths[i].ToString();
                         }
@@ -632,6 +632,7 @@ namespace BYOSA_Utility
             DateTime DTresult;
             decimal Decresult;
             int Intresult;
+            int columnCount = 1;
            
             JsonElement root;
             JsonElement attributeName;
@@ -699,18 +700,22 @@ namespace BYOSA_Utility
                         //get each of the fields
                         columnValue = fieldParser.ReadFields();
 
-                       //first row should have column names
-                       fieldParser.ReadLine();
+                        //if there headers in the CSV files then the first row contains the name;
+                       if(chkHasHeaders.Checked)
+                        { 
+                           fieldParser.ReadLine();
 
-                        //Processing row
-                        string[] columns = fieldParser.ReadFields();
+                            //Processing row
+                            string[] columns = fieldParser.ReadFields();
 
-                        foreach (string column in columns)
-                        {
-                            entityStructure.Rows.Add(column, "string");
+                            foreach (string column in columns)
+                            {
+                                entityStructure.Rows.Add(column, columnCount, "string");
+                                columnCount++;
+                            }
                         }
-                   
-
+                        //reset the counter
+                        columnCount = 1;
                         //read in a record to try the data types
                         fieldParser.ReadLine();
 
@@ -719,7 +724,6 @@ namespace BYOSA_Utility
 
                         foreach (string value in values)
                         {
-
                             //check for the dates
                             if (Int32.TryParse(value, out Intresult) && failedParse == false)
                             {
@@ -738,6 +742,23 @@ namespace BYOSA_Utility
                                 failedParse = true;
                                 attributeDataType = "string";
                             }
+
+                            if (!chkHasHeaders.Checked)
+                            {
+                                entityStructure.Rows.Add("N/A", columnCount, attributeDataType);
+                                columnCount++;
+                            }
+                            //update the attribute data type for records that already exist
+                            else
+                            {
+                                if(entityStructure.Rows[columnCount]["DataType"] != null)
+                                {
+                                    entityStructure.Rows[columnCount]["DataType"] = attributeDataType;
+                                }
+                            }
+
+                            //reset the failed parse check
+                            failedParse = false;
                         }
                     }
                 }
