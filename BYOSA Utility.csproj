@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.8.0" />
+    <PackageReference Include="Parquet.Net" Version="3.9.1" />
   </ItemGroup>
 
 </Project>

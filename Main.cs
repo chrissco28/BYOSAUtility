@@ -16,6 +16,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using Microsoft.VisualBasic.FileIO;
+using Parquet.Data;
+using Parquet;
 
 namespace BYOSA_Utility
 {
@@ -29,6 +31,7 @@ namespace BYOSA_Utility
         StringBuilder log = new StringBuilder();
         DataTable resultsDetails = new DataTable();
         string messageHeader = "CDM Manifest Utility";
+        DataTable entityStructure = new DataTable();
 
         private void btnTest_Click(object sender, EventArgs e)
         {   
@@ -151,11 +154,12 @@ namespace BYOSA_Utility
 
             this.Text = "CDM Manifest Utility (" + Assembly.GetExecutingAssembly().GetName().Version.ToString() + ")";
 
-            resultsDetails.Columns.Add("Source");
             resultsDetails.Columns.Add("EntityName");
             resultsDetails.Columns.Add("AttributeOrder");
-            resultsDetails.Columns.Add("AttributeName");
-            resultsDetails.Columns.Add("DataType");
+            resultsDetails.Columns.Add("ManifestAttributeName");
+            resultsDetails.Columns.Add("ManifestDataType");
+            resultsDetails.Columns.Add("FileAttributeName");
+            resultsDetails.Columns.Add("FileDataType");
         }
 
         private void btnOpenManifest_Click(object sender, EventArgs e)
@@ -622,17 +626,15 @@ namespace BYOSA_Utility
             string line = string.Empty;
             int manifestColumnCount = 1;
             string manifestContent = string.Empty;
-            string[] columnValue;
             bool attributeNameMatch = true;
             bool attributeDataTypeMatch = true;
             bool hasErrors = false;
-            bool failedParse = false;
-            string attributeDataType = "string";
             StringBuilder sb = new StringBuilder();
-            DateTime DTresult;
-            decimal Decresult;
-            int Intresult;
-            int columnCount = 1;
+            int maxResultCount = 0;
+            string manifestAttributeName;
+            string manifestDataType;
+            string entityAttributeName;
+            string entityDataType;
            
             JsonElement root;
             JsonElement attributeName;
@@ -640,7 +642,6 @@ namespace BYOSA_Utility
 
             DataRow[] dataRow;
             #region tabledeclartion 
-            DataTable entityStructure = new DataTable();
             entityStructure.Rows.Clear();
             entityStructure.Columns.Clear();
             entityStructure.Columns.Add("AttributeName");
@@ -679,121 +680,21 @@ namespace BYOSA_Utility
                 Response<FileDownloadInfo> downloadResponseFile = fileClient.Read();
                 Response<FileDownloadInfo> downloadResponseEntity = entityManifest.Read();
 
+                if (filePath.EndsWith("csv"))
+                {
+                    ReadCSV(downloadResponseFile);
+                }
+                else if (filePath.EndsWith("parquet"))
+                {
+                    
+                    ReadParquet(downloadResponseFile);
+                }
+
                 Log("Entity Manifest Path: " + entityManifest.Name);
                 Log("Entity File Path: " + filePath);
 
-                //read in the first row for column names and to get the initial structure
-                using (TextFieldParser fieldParser = new TextFieldParser(downloadResponseFile.Value.Content))
-                {
-                    //update to use parquet in the next release
-                    if (filePath.EndsWith("csv"))
-                    {
-                   
-                        fieldParser.TextFieldType = FieldType.Delimited;
-                        fieldParser.Delimiters = new string[] { "," };
-
-                        if (cmbQuote.Text == "None")
-                            fieldParser.HasFieldsEnclosedInQuotes = false;
-                        else
-                            fieldParser.HasFieldsEnclosedInQuotes = true;
-                    
-                        //get each of the fields
-                        columnValue = fieldParser.ReadFields();
-
-                        //if there headers in the CSV files then the first row contains the name;
-                       if(chkHasHeaders.Checked)
-                        { 
-                           fieldParser.ReadLine();
-
-                            //Processing row
-                            string[] columns = fieldParser.ReadFields();
-
-                            foreach (string column in columns)
-                            {
-                                entityStructure.Rows.Add(column, columnCount, "string");
-                                columnCount++;
-                            }
-                        }
-                        //reset the counter
-                        columnCount = 1;
-                        //read in a record to try the data types
-                        fieldParser.ReadLine();
-
-                       //Processing row
-                        string[] values = fieldParser.ReadFields();
-
-                        foreach (string value in values)
-                        {
-                            //check for the dates
-                            if (Int32.TryParse(value, out Intresult) && failedParse == false)
-                            {
-                                attributeDataType = "int32";
-                            }
-                            else if (Decimal.TryParse(value, out Decresult) && failedParse == false)
-                            {
-                                attributeDataType = "decimal";
-                            }
-                            else if (DateTime.TryParse(value, out DTresult) && failedParse == false)
-                            {
-                                attributeDataType = "dateTime";
-                            }
-                            else
-                            {
-                                failedParse = true;
-                                attributeDataType = "string";
-                            }
-
-                            if (!chkHasHeaders.Checked)
-                            {
-                                entityStructure.Rows.Add("N/A", columnCount, attributeDataType);
-                                columnCount++;
-                            }
-                            //update the attribute data type for records that already exist
-                            else
-                            {
-                                if(entityStructure.Rows[columnCount]["DataType"] != null)
-                                {
-                                    entityStructure.Rows[columnCount]["DataType"] = attributeDataType;
-                                }
-                            }
-
-                            //reset the failed parse check
-                            failedParse = false;
-                        }
-                    }
-                }
-
                 //download the manifest file
-                using (StreamReader streamReaderManifest = new StreamReader(downloadResponseEntity.Value.Content))
-                {
-
-                    //format the JSON
-                    try
-                    {
-                        var options = new JsonSerializerOptions()
-                        {
-                            WriteIndented = true,
-                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                        };
-
-                        var jsonElement = JsonSerializer.Deserialize<JsonElement>(streamReaderManifest.ReadToEnd().ToString());
-
-                        manifestContent = JsonSerializer.Serialize(jsonElement, options);
-
-                    }
-                    catch (JsonException jx)
-                    {
-                        MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, messageHeader);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("An error has occurred: " + ex.Message, messageHeader);
-                    }
-                    finally
-                    {
-                        Cursor.Current = Cursors.Default;
-                    }
-                }
+                manifestContent = ReadManifest(downloadResponseEntity);
 
                 var JSONoptions = new JsonDocumentOptions()
                 {
@@ -830,7 +731,6 @@ namespace BYOSA_Utility
                         manifestColumnCount++;
                     }
                 }
-
 
                 //compare the two tables now
                 //look for the number of rows
@@ -905,17 +805,45 @@ namespace BYOSA_Utility
                 }
                 sb.AppendLine("--- End Attribute Details ---");
                 Log(sb.ToString());
-            
-                //store the results into a data table to be used in CSV file save
-                for (int x = 0; x < manifestStructure.Rows.Count; x++)
+             
+                if (manifestStructure.Rows.Count > entityStructure.Rows.Count)
+                    maxResultCount = manifestStructure.Rows.Count;
+                else
+                    maxResultCount = entityStructure.Rows.Count;
+
+                //structure the results so the entities can be compared side-by-side in Excel
+                for (int x = 0; x < maxResultCount; x++)
                 {
-                    resultsDetails.Rows.Add("Manifest", entityName, manifestStructure.Rows[x]["AttributeOrder"].ToString(), manifestStructure.Rows[x]["AttributeName"].ToString(), manifestStructure.Rows[x]["DataType"].ToString());
+                    if (x > 30)
+                        System.Diagnostics.Debug.WriteLine("---");
+
+                    //if the row is out of range
+                    try
+                    { 
+                        manifestAttributeName = manifestStructure.Rows[x]["AttributeName"].ToString();
+                        manifestDataType = manifestStructure.Rows[x]["DataType"].ToString();
+                    }
+                    catch
+                    {
+                        manifestAttributeName = " - ";
+                        manifestDataType = " - ";
+                    }
+
+                    //if the row is out of range
+                    try
+                    {
+                        entityAttributeName = entityStructure.Rows[x]["AttributeName"].ToString();
+                        entityDataType = entityStructure.Rows[x]["DataType"].ToString();
+                    }
+                    catch
+                    {
+                        entityAttributeName = " - ";
+                        entityDataType = " - ";
+                    }
+
+                    resultsDetails.Rows.Add(entityName, x, manifestAttributeName, manifestDataType, entityAttributeName, entityDataType);
                 }
-           
-                for (int x = 0; x < entityStructure.Rows.Count; x++)
-                {
-                    resultsDetails.Rows.Add("File", entityName, entityStructure.Rows[x]["AttributeOrder"].ToString(), entityStructure.Rows[x]["AttributeName"].ToString(), entityStructure.Rows[x]["DataType"].ToString());
-                }
+
             }
             catch (Exception ex)
             {
@@ -961,6 +889,156 @@ namespace BYOSA_Utility
             }
             else
                 txtManifestRoot.Enabled = true;
+        }
+
+
+        private void ReadParquet(Response<FileDownloadInfo> downloadResponseFile)
+        {
+             // open parquet file reader
+            using (var parquetReader = new ParquetReader(downloadResponseFile.Value.Content))
+            {
+                // get file schema (available straight after opening parquet reader)
+                // however, get only data fields as only they contain data values
+                DataField[] dataFields = parquetReader.Schema.GetDataFields();
+
+                if (entityStructure.Columns.Count > 0)
+                {
+                    entityStructure.Rows.Clear();
+                    entityStructure.Columns.Clear();
+                }
+
+                for (int k = 0; k < dataFields.Length; k++)
+                {
+                    entityStructure.Rows.Add(dataFields[k].Name, k+1, dataFields[k].DataType);
+                }
+            }
+            
+        }
+
+        private void ReadCSV(Response<FileDownloadInfo> downloadResponseFile)
+        {
+            string[] columnValue;
+            bool failedParse = false;
+            string attributeDataType = "string";
+            DateTime DTresult;
+            decimal Decresult;
+            int Intresult;
+            int columnCount = 1;
+
+            //read in the first row for column names and to get the initial structure
+            using (TextFieldParser fieldParser = new TextFieldParser(downloadResponseFile.Value.Content))
+            {
+                
+                fieldParser.TextFieldType = FieldType.Delimited;
+                fieldParser.Delimiters = new string[] { "," };
+
+                if (cmbQuote.Text == "None")
+                    fieldParser.HasFieldsEnclosedInQuotes = false;
+                else
+                    fieldParser.HasFieldsEnclosedInQuotes = true;
+
+                //get each of the fields
+                columnValue = fieldParser.ReadFields();
+
+                //if there headers in the CSV files then the first row contains the name;
+                if (chkHasHeaders.Checked)
+                {
+                    fieldParser.ReadLine();
+
+                    //Processing row
+                    string[] columns = fieldParser.ReadFields();
+
+                    foreach (string column in columns)
+                    {
+                        entityStructure.Rows.Add(column, columnCount, "string");
+                        columnCount++;
+                    }
+                }
+                //reset the counter
+                columnCount = 1;
+                //read in a record to try the data types
+                fieldParser.ReadLine();
+
+                //Processing row
+                string[] values = fieldParser.ReadFields();
+
+                foreach (string value in values)
+                {
+                    //check for the dates
+                    if (Int32.TryParse(value, out Intresult) && failedParse == false)
+                    {
+                        attributeDataType = "int32";
+                    }
+                    else if (Decimal.TryParse(value, out Decresult) && failedParse == false)
+                    {
+                        attributeDataType = "decimal";
+                    }
+                    else if (DateTime.TryParse(value, out DTresult) && failedParse == false)
+                    {
+                        attributeDataType = "dateTime";
+                    }
+                    else
+                    {
+                        failedParse = true;
+                        attributeDataType = "string";
+                    }
+
+                    if (!chkHasHeaders.Checked)
+                    {
+                        entityStructure.Rows.Add("N/A", columnCount, attributeDataType);
+                        columnCount++;
+                    }
+                    //update the attribute data type for records that already exist
+                    else
+                    {
+                        if (entityStructure.Rows[columnCount]["DataType"] != null)
+                        {
+                            entityStructure.Rows[columnCount]["DataType"] = attributeDataType;
+                        }
+                    }
+
+                    //reset the failed parse check
+                    failedParse = false;
+                }
+            }
+        }
+
+        private string ReadManifest(Response<FileDownloadInfo> downloadResponseFile)
+        {
+            string manifestContent = string.Empty;
+
+            //download the manifest file
+            using (StreamReader streamReaderManifest = new StreamReader(downloadResponseFile.Value.Content))
+            {
+
+                //format the JSON
+                try
+                {
+                    var options = new JsonSerializerOptions()
+                    {
+                        WriteIndented = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    };
+
+                    var jsonElement = JsonSerializer.Deserialize<JsonElement>(streamReaderManifest.ReadToEnd().ToString());
+
+                    manifestContent = JsonSerializer.Serialize(jsonElement, options);
+
+                }
+                catch (JsonException jx)
+                {
+                    MessageBox.Show("The manifest file is not in a proper JSON format: " + jx.Message, messageHeader);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("An error has occurred: " + ex.Message, messageHeader);
+                }
+                finally
+                {
+                    Cursor.Current = Cursors.Default;
+                }
+            }
+            return manifestContent;
         }
     }
 }
